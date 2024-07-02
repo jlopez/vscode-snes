@@ -3,6 +3,10 @@
   "displayName": "vscode-snes",
   "description": "SNES Extension",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jlopez/vscode-snes"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
