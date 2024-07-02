@@ -22,6 +22,7 @@ import {
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
+import { Library, types } from 'ffi-napi';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -76,6 +77,19 @@ connection.onInitialized(() => {
 			connection.console.log('Workspace folder change event received.');
 		});
 	}
+
+	// Define the path to your .dylib file
+	const dylibPath = '/Users/jlopez/IdeaProjects/personal/asar/asar/lib/libasar.dylib';
+
+	// Define the function signatures from your .dylib
+	// For example, if you have a function `int add(int, int)` in your .dylib
+	const lib = new Library(dylibPath, {
+		'asar_version': [ types.int, [ ] ],
+	});
+
+	// Now you can call the function
+	const result = lib.asar_version();
+	console.log('Asar Version: %d', result);
 });
 
 // The example settings
