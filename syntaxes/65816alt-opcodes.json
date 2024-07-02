@@ -1,0 +1,18 @@
+{
+  "scopeName": "source.65816alt-opcodes",
+  "patterns": [
+    {
+      "include": "#mnemonics-65816alt"
+    }
+  ],
+  "repository": {
+    "mnemonics-65816alt": {
+      "patterns": [
+        {
+          "match": "\\b(?i:tas|tsa|swa|tad|tda|blt|bge)\\b",
+          "name": "keyword.mnemonic.65816.65816alt-opcodes"
+        }
+      ]
+    }
+  }
+}

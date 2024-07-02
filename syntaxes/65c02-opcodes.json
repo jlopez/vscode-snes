@@ -1,0 +1,25 @@
+{
+  "scopeName": "source.65c02-opcodes",
+  "patterns": [
+    {
+      "include": "source.6502-opcodes"
+    },
+    {
+      "include": "#mnemonics-65c02"
+    }
+  ],
+  "repository": {
+    "mnemonics-65c02": {
+      "patterns": [
+        {
+          "match": "\\b(?i:BRA|PHX|PHY|PLX|PLY|STP|STZ|TRB|TSB|WAI)\\b",
+          "name": "keyword.mnemonic.65c02.65c02-opcodes"
+        },
+        {
+          "match": "\\b(?i:(BBR|BBS|RMB|SMB)[0-7])\\b",
+          "name": "keyword.mnemonic.65c02.65c02-opcodes"
+        }
+      ]
+    }
+  }
+}

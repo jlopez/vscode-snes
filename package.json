@@ -18,6 +18,41 @@
         "title": "Hello World"
       }
     ],
+    "grammars": [
+      {
+        "language": "asar",
+        "scopeName": "source.assembly.65816.asar",
+        "path": "./syntaxes/asar.json"
+      },
+      {
+        "scopeName": "source.65816-opcodes",
+        "path": "./syntaxes/65816-opcodes.json"
+      },
+      {
+        "scopeName": "source.65c02-opcodes",
+        "path": "./syntaxes/65c02-opcodes.json"
+      },
+      {
+        "scopeName": "source.6502-opcodes",
+        "path": "./syntaxes/6502-opcodes.json"
+      },
+      {
+        "scopeName": "source.65816l-opcodes",
+        "path": "./syntaxes/65816l-opcodes.json"
+      },
+      {
+        "scopeName": "source.65816alt-opcodes",
+        "path": "./syntaxes/65816alt-opcodes.json"
+      },
+      {
+        "scopeName": "source.spc700-opcodes",
+        "path": "./syntaxes/spc700-opcodes.json"
+      },
+      {
+        "scopeName": "source.superfx-opcodes",
+        "path": "./syntaxes/superfx-opcodes.json"
+      }
+    ],
     "languages": [
       {
         "id": "asar",
