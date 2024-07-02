@@ -23,6 +23,16 @@
         "title": "Hello World"
       }
     ],
+    "configuration": {
+      "title": "Asar",
+      "properties": {
+        "asar.path": {
+          "type": "string",
+          "default": "asar",
+          "description": "Path to the Asar executable."
+        }
+      }
+    },
     "grammars": [
       {
         "language": "asar",
