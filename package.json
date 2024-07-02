@@ -17,6 +17,19 @@
         "command": "vscode-snes.helloWorld",
         "title": "Hello World"
       }
+    ],
+    "languages": [
+      {
+        "id": "asar",
+        "aliases": [
+          "Asar SNES Assembler",
+          "asar"
+        ],
+        "extensions": [
+          ".asm"
+        ],
+        "configuration": "./language-configuration.json"
+      }
     ]
   },
   "scripts": {
