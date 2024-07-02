@@ -13,8 +13,10 @@
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js"
+				"${workspaceRoot}/client/out/**/*.js",
+				"${workspaceRoot}/server/out/**/*.js"
 			],
+			"autoAttachChildProcesses": true,
 			"preLaunchTask": "${defaultBuildTask}"
 		}
 	]

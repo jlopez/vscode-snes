@@ -1,0 +1,19 @@
+{
+	"name": "vscode-snes-server",
+	"description": "SNES Extension Language Server",
+	"version": "1.0.0",
+	"author": "Jesus Lopez <jesus@jesusla.com>",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jlopez/vscode-snes"
+	},
+	"dependencies": {
+		"vscode-languageserver": "^9.0.1",
+		"vscode-languageserver-textdocument": "^1.0.11"
+	},
+	"scripts": {}
+}

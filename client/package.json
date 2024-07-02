@@ -1,0 +1,22 @@
+{
+  "name": "vscode-snes-client",
+  "displayName": "vscode-snes-client",
+  "description": "VSCode part of SNES Extension ",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "jesusla",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jlopez/vscode-snes"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^2.4.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}
