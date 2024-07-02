@@ -3,6 +3,7 @@
   "displayName": "vscode-snes",
   "description": "SNES Extension",
   "version": "0.0.1",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/jlopez/vscode-snes"
