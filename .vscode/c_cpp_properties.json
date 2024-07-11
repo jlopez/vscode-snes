@@ -4,6 +4,7 @@
             "name": "Mac",
             "includePath": [
                 "${env:HOME}/Library/Caches/node-gyp/20.7.0/include/node",
+                "${env:HOME}/IdeaProjects/personal/asar/src",
                 "${workspaceFolder}/asar/node_modules/node-addon-api"
             ],
             "defines": [],

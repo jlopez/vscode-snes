@@ -15,6 +15,19 @@
 				"kind": "build",
 				"isDefault": true
 			}
-		}
+		},
+        {
+            "label": "Build Node Addon",
+            "type": "npm",
+            "script": "build",
+            "path": "asar/",
+            "options": {
+                "cwd": "${workspaceFolder}/asar"
+            },
+            "problemMatcher": "$gcc",
+            "presentation": {
+                "reveal": "silent"
+            }
+        }
 	]
 }

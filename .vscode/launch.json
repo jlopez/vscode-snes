@@ -20,6 +20,19 @@
 			"preLaunchTask": "${defaultBuildTask}",
 		},
 		{
+			"name": "Harness NAPI Asar",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceFolder}/asar/out/index.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outFiles": [
+				"${workspaceRoot}/asar/out/**/*.js",
+			],
+			"preLaunchTask": "Build Node Addon",
+		},
+		{
 			"name": "Run Extension",
 			"type": "extensionHost",
 			"request": "launch",

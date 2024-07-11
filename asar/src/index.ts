@@ -1,8 +1,7 @@
-const { Example } = require('bindings')('asar');
+import bindings from 'bindings';
 
-const example = new Example(11);
-console.log(example.GetValue());
-// It prints 11
-example.SetValue(19);
-console.log(example.GetValue());
-// It prints 19
+const { Asar } = bindings('asar');
+
+console.log(Asar.version); // returns number
+console.log(Asar.apiVersion); // returns number
+console.log(Asar.reset()); // returns true
