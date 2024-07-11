@@ -1,0 +1,21 @@
+{
+	"name": "asar",
+	"description": "Asar Library Bindings",
+	"version": "1.0.0",
+	"author": "Jesus Lopez <jesus@jesusla.com>",
+	"license": "MIT",
+	"engines": {
+		"node": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jlopez/vscode-snes"
+	},
+	"scripts": {},
+	"devDependencies": {
+		"node-gyp": "^10.2.0"
+	},
+	"dependencies": {
+		"node-addon-api": "^8.1.0"
+	}
+}
