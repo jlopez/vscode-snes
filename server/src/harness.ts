@@ -10,7 +10,9 @@ const rv = asar.patch({
 	assemblyPath: '/Users/jlopez/IdeaProjects/personal/SMWDisX/smw.asm',
 	romSizeHint: 524_288,
 	defines: {
-		'_VER': '1',
+//		'_VER': '1',
 	}
 });
 console.log('patch result: %o', rv);
+console.log('Max Rom Size: %d', asar.getMaxRomSize());
+asar.getErrors();

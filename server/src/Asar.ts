@@ -68,11 +68,64 @@ const NativePatchParams = StructType({
 
 type PatchParams = UnderlyingType<typeof NativePatchParams>;
 
+const NativeStackEntry = StructType({
+    fullpath: types.CString,
+    prettypath: types.CString,
+    lineno: types.int32,
+    details: types.CString,
+});
+
+const NativeStackEntryArray = ArrayType(NativeStackEntry);
+
+const manual = true;
+
+const NativeErrorData = StructType({
+    fullerrdata: types.int64,
+    rawerrdata: types.int64,
+    block: types.int64,
+    filename: types.int64,
+    line: types.int32,
+    callstack: types.int64,
+    callstacksize: types.int32,
+    errname: types.int64,
+});
+
+interface CallStack {
+    fullPath?: string;
+    prettyPath?: string;
+    lineNo: number;
+    details?: string;
+};
+
+interface ErrorData {
+    fullErrorData?: string;
+    rawErrorData?: string;
+    block?: string;
+    filename?: string;
+    line: number;
+    callStack: CallStack[];
+    errorName?: string;
+}
+
+const NativeErrorDataArray = ArrayType(NativeErrorData);
+
 const asarLibraryDefinition = libraryDefinition({
     'asar_version': [ types.int, [ ] ],
     'asar_apiversion': [ types.int, [ ] ],
     'asar_reset': [ types.bool, [ ] ],
     'asar_patch': [ types.bool, [ ref.refType(NativePatchParams) ] ],
+    /* Returns the maximum possible size of the output ROM from asar_patch().
+     * Giving this size to buflen guarantees you will not get any buffer too small
+     * errors; however, it is safe to give smaller buffers if you don't expect any
+     * ROMs larger than 4MB or something.
+     */
+    'asar_maxromsize': [ types.int, [ ] ],
+    /* Get a list of all errors.
+     * All pointers from these functions are valid only until the same function is
+     * called again, or until asar_patch, asar_reset or asar_close is called,
+     * whichever comes first. Copy the contents if you need it for a longer time.
+     */
+    'asar_geterrors': [ ref.refType(NativeErrorData), [ ref.refType(ref.types.uint32) ] ],
 });
 
 type AsarLibrary = LibraryObject<LibraryObjectDefinitionToLibraryDefinition<typeof asarLibraryDefinition>>;
@@ -149,5 +202,75 @@ export class Asar {
         }
         const nativePatchParams = new NativePatchParams(patchParams);
         return this.lib?.asar_patch(nativePatchParams.ref());
+    }
+
+    /* Returns the maximum possible size of the output ROM from asar_patch().
+     * Giving this size to buflen guarantees you will not get any buffer too small
+     * errors; however, it is safe to give smaller buffers if you don't expect any
+     * ROMs larger than 4MB or something.
+     */
+    public getMaxRomSize() {
+        return this.lib?.asar_maxromsize();
+    }
+
+    /* Get a list of all errors.
+     * All pointers from these functions are valid only until the same function is
+     * called again, or until asar_patch, asar_reset or asar_close is called,
+     * whichever comes first. Copy the contents if you need it for a longer time.
+     */
+    public getErrors() {
+        const errorCountPtr = ref.alloc(ref.types.uint32, 0);
+        const ptr = this.lib?.asar_geterrors(errorCountPtr);
+        const ts0 = Date.now();
+        const errorCount = errorCountPtr.deref();
+        const memory = ptr?.reinterpret(NativeErrorData.size * errorCount) as Buffer;
+        console.log("%s: memory for %d errors", Date.now() - ts0, errorCount);
+        const nativeErrors = new NativeErrorDataArray(memory, errorCount);
+        let arr = [0, 0, 0, 0];
+        for (let i = 0; i < errorCount; i++) {
+            const nativeError = nativeErrors[i];
+            if (manual) {
+                let ts1 = Date.now();
+                const buf: Buffer = (nativeError as any)['ref.buffer'];
+                arr[0] += Date.now() - ts1, ts1 = Date.now();
+                const _buf = ref.readPointer(buf, 0);
+                arr[1] += Date.now() - ts1, ts1 = Date.now();
+                const flag = ref.isNull(_buf);
+                arr[2] += Date.now() - ts1, ts1 = Date.now();
+                const str = flag ? undefined : ref.readCString(_buf, 0);
+                arr[3] += Date.now() - ts1, ts1 = Date.now();
+            } else {
+                nativeError.toObject();
+            }
+        }
+        console.log("%s: iterate errors", Date.now() - ts0);
+        console.log(arr);
+        // const nativeErrors = new NativeErrorDataArray(memory, errorCount);
+        // const errors: ErrorData[] = [];
+        // const callStackField = NativeErrorData.fields['callstack'];
+        // for (let i = 0; i < errorCount; i++) {
+        //     const ts0 = Date.now();
+        //     console.log("Processing error %d/%d", i + 1, errorCount);
+        //     const nativeError = nativeErrors[i];
+        //     const nativeErrorBuffer: Buffer = (nativeError as any)['ref.buffer'];
+        //     const arraySize = nativeError.callstacksize * NativeStackEntry.size;
+        //     const nativeCallStack = new NativeStackEntryArray(nativeErrorBuffer.readPointer(callStackField.offset, arraySize), nativeError.callstacksize);
+        //     console.log("  %s:   nativeCallStack", Date.now() - ts0);
+        //     const callStack: CallStack[] = nativeCallStack.toArray().map((entry) => entry.toObject());
+        //     console.log("  %s:   nativeCallStack conversion", Date.now() - ts0);
+        //     const error = {
+        //         fullErrorData: nativeError.fullerrdata ?? undefined,
+        //         rawErrorData: nativeError.rawerrdata ?? undefined,
+        //         block: nativeError.block ?? undefined,
+        //         filename: nativeError.filename ?? undefined,
+        //         line: nativeError.line,
+        //         callStack,
+        //         errorName: nativeError.errname ?? undefined,
+        //     };
+        //     console.log("  %s:   nativeError conversion", Date.now() - ts0);
+        //     errors.push(error);
+        //     console.log("  %s:   error push", Date.now() - ts0);
+        // }
+        // return errors;
     }
 }

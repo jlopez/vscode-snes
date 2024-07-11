@@ -6,6 +6,20 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Harness Asar",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceFolder}/server/out/harness.js",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"outFiles": [
+				"${workspaceRoot}/client/out/**/*.js",
+				"${workspaceRoot}/server/out/**/*.js"
+			],
+			"preLaunchTask": "${defaultBuildTask}",
+		},
+		{
 			"name": "Run Extension",
 			"type": "extensionHost",
 			"request": "launch",
@@ -18,6 +32,6 @@
 			],
 			"autoAttachChildProcesses": true,
 			"preLaunchTask": "${defaultBuildTask}"
-		}
+		},
 	]
 }
