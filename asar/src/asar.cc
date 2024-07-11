@@ -70,26 +70,15 @@ Napi::Value Asar::Patch(const Napi::CallbackInfo& info) {
   auto options = info[0].As<Napi::Object>();
   auto assemblyPath = options.Get("assemblyPath").As<Napi::String>().Utf8Value();
   auto romSizeHint = options.Get("romSizeHint").As<Napi::Number>();
+  auto includePaths = options.Get("includePaths").As<Napi::Array>();
   auto defines = options.Get("defines").As<Napi::Object>();
+  auto stdIncludesPath = options.Get("stdIncludesPath").As<Napi::String>();
+  auto stdDefinesPath = options.Get("stdDefinesPath").As<Napi::String>();
+  auto generateChecksum = options.Get("generateChecksum").As<Napi::Boolean>();
+  auto fullCallStack = options.Get("fullCallStack").As<Napi::Boolean>();
 
-  auto romlen = 524288;
+  auto romlen = romSizeHint.IsNumber() ? romSizeHint.Int32Value() : 1048576;
   auto romdata = new char[romlen];
-
-  printf("assemblyPath: %s\n", assemblyPath.c_str());
-
-  // Enumerate all properties of defines
-  auto defKeys = defines.GetPropertyNames();
-  int defineCount = defKeys.Length();
-  definedata *additional_defines = new definedata[defineCount];
-  for (auto i = 0; i < defineCount; i++) {
-    auto key = defKeys.Get(i).As<Napi::String>();
-    auto value = defines.Get(key).As<Napi::String>();
-    additional_defines[i] = definedata {
-      .name = key.Utf8Value().c_str(),
-      .contents = value.Utf8Value().c_str(),
-    };
-    printf("define: %s=%s\n", key.Utf8Value().c_str(), value.Utf8Value().c_str());
-  }
 
   auto patchParams = patchparams {
     .structsize = sizeof(patchparams),
@@ -97,14 +86,72 @@ Napi::Value Asar::Patch(const Napi::CallbackInfo& info) {
     .romdata = romdata,
     .buflen = romlen,
     .romlen = &romlen,
-    .additional_defines = additional_defines,
-    .additional_define_count = defineCount,
   };
+
+  if (includePaths.IsArray()) {
+    int count = includePaths.Length();
+    auto ptr = new const char*[count];
+    for (auto i = 0; i < count; i++) {
+      auto path = includePaths.Get(i).As<Napi::String>().Utf8Value();
+      ptr[i] = strdup(path.c_str());
+    }
+    patchParams.numincludepaths = count;
+    patchParams.includepaths = ptr;
+  }
+
+  if (defines.IsObject()) {
+    auto defKeys = defines.GetPropertyNames();
+    int count = defKeys.Length();
+    auto ptr = new definedata[patchParams.additional_define_count];
+    for (auto i = 0; i < count; i++) {
+      auto key = defKeys.Get(i).As<Napi::String>().Utf8Value();
+      auto value = defines.Get(key).As<Napi::String>().Utf8Value();
+      ptr[i] = definedata {
+        .name = strdup(key.c_str()),
+        .contents = strdup(value.c_str()),
+      };
+    }
+    patchParams.additional_defines = ptr;
+    patchParams.additional_define_count = count;
+  }
+
+  if (stdIncludesPath.IsString()) {
+    patchParams.stdincludesfile = strdup(stdIncludesPath.Utf8Value().c_str());
+  }
+
+  if (stdDefinesPath.IsString()) {
+    patchParams.stddefinesfile = strdup(stdDefinesPath.Utf8Value().c_str());
+  }
+
+  if (generateChecksum.IsBoolean()) {
+    patchParams.override_checksum_gen = true;
+    patchParams.generate_checksum = generateChecksum.Value();
+  }
+
+  patchParams.full_call_stack = fullCallStack.ToBoolean().Value();
 
   auto rv = asar_patch(&patchParams);
 
   delete[] romdata;
-  delete[] additional_defines;
+
+  for (auto i = 0; i < patchParams.additional_define_count; i++) {
+    free(const_cast<char *>(patchParams.additional_defines[i].name));
+    free(const_cast<char *>(patchParams.additional_defines[i].contents));
+  }
+  if (patchParams.additional_defines)
+    delete[] patchParams.additional_defines;
+
+  for (auto i = 0; i < patchParams.numincludepaths; ++i) {
+    free(const_cast<char *>(patchParams.includepaths[i]));
+  }
+  if (patchParams.includepaths)
+    delete[] patchParams.includepaths;
+
+  if (patchParams.stdincludesfile)
+    free(const_cast<char *>(patchParams.stdincludesfile));
+
+  if (patchParams.stddefinesfile)
+    free(const_cast<char *>(patchParams.stddefinesfile));
 
   return Napi::Boolean::New(env, rv);
 }

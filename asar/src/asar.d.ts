@@ -4,7 +4,12 @@ declare module 'bindings' {
     export interface PatchOptions {
         assemblyPath: string;
         romSizeHint?: number;
+        includePaths?: string[];
         defines?: Record<string, string>;
+        stdIncludesPath?: string;
+        stdDefinesPath?: string;
+        generateChecksum?: boolean;
+        fullCallStack?: boolean;
     }
 
     export interface StackEntry {

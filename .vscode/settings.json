@@ -10,6 +10,7 @@
 	"typescript.tsc.autoDetect": "off",
 	"files.associations": {
 		"__tree": "cpp",
-		"string": "cpp"
+		"string": "cpp",
+		"vector": "cpp"
 	}
 }
