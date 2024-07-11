@@ -1,5 +1,6 @@
 #include <napi.h>
 #include <asar/interface-lib.h>
+#include <map>
 
 // From https://github.com/nodejs/node-addon-api/blob/main/doc/object_wrap.md
 class Asar : public Napi::ObjectWrap<Asar> {
@@ -11,6 +12,9 @@ class Asar : public Napi::ObjectWrap<Asar> {
     static Napi::Value GetVersion(const Napi::CallbackInfo& info);
     static Napi::Value GetApiVersion(const Napi::CallbackInfo& info);
     static Napi::Value Reset(const Napi::CallbackInfo& info);
+    static Napi::Value Patch(const Napi::CallbackInfo& info);
+    static Napi::Value MaxRomSize(const Napi::CallbackInfo& info);
+    static Napi::Value Errors(const Napi::CallbackInfo& info);
 };
 
 Napi::Object Asar::Init(Napi::Env env, Napi::Object exports) {
@@ -19,6 +23,9 @@ Napi::Object Asar::Init(Napi::Env env, Napi::Object exports) {
         StaticAccessor<&Asar::GetVersion>("version", static_cast<napi_property_attributes>(napi_enumerable)),
         StaticAccessor<&Asar::GetApiVersion>("apiVersion", static_cast<napi_property_attributes>(napi_enumerable)),
         StaticMethod<&Asar::Reset>("reset", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticMethod<&Asar::Patch>("patch", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticAccessor<&Asar::MaxRomSize>("maxRomSize", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticAccessor<&Asar::Errors>("errors", static_cast<napi_property_attributes>(napi_enumerable)),
     });
 
     Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -56,6 +63,86 @@ Napi::Value Asar::GetApiVersion(const Napi::CallbackInfo& info) {
 
 Napi::Value Asar::Reset(const Napi::CallbackInfo& info) {
   return Napi::Boolean::New(info.Env(), asar_reset());
+}
+
+Napi::Value Asar::Patch(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  auto options = info[0].As<Napi::Object>();
+  auto assemblyPath = options.Get("assemblyPath").As<Napi::String>().Utf8Value();
+  auto romSizeHint = options.Get("romSizeHint").As<Napi::Number>();
+  auto defines = options.Get("defines").As<Napi::Object>();
+
+  auto romlen = 524288;
+  auto romdata = new char[romlen];
+
+  printf("assemblyPath: %s\n", assemblyPath.c_str());
+
+  // Enumerate all properties of defines
+  auto defKeys = defines.GetPropertyNames();
+  int defineCount = defKeys.Length();
+  definedata *additional_defines = new definedata[defineCount];
+  for (auto i = 0; i < defineCount; i++) {
+    auto key = defKeys.Get(i).As<Napi::String>();
+    auto value = defines.Get(key).As<Napi::String>();
+    additional_defines[i] = definedata {
+      .name = key.Utf8Value().c_str(),
+      .contents = value.Utf8Value().c_str(),
+    };
+    printf("define: %s=%s\n", key.Utf8Value().c_str(), value.Utf8Value().c_str());
+  }
+
+  auto patchParams = patchparams {
+    .structsize = sizeof(patchparams),
+    .patchloc = assemblyPath.c_str(),
+    .romdata = romdata,
+    .buflen = romlen,
+    .romlen = &romlen,
+    .additional_defines = additional_defines,
+    .additional_define_count = defineCount,
+  };
+
+  auto rv = asar_patch(&patchParams);
+
+  delete[] romdata;
+  delete[] additional_defines;
+
+  return Napi::Boolean::New(env, rv);
+}
+
+Napi::Value Asar::MaxRomSize(const Napi::CallbackInfo& info) {
+  return Napi::Number::New(info.Env(), asar_maxromsize());
+}
+
+Napi::Value Asar::Errors(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  auto errorCount = 0;
+  auto errors = asar_geterrors(&errorCount);
+  auto errorList = Napi::Array::New(env, errorCount);
+  for (auto i = 0; i < errorCount; i++) {
+    auto error = errors[i];
+
+    auto stackEntries = Napi::Array::New(env, error.callstacksize);
+    for (auto j = 0; j < error.callstacksize; j++) {
+      auto stackEntry = error.callstack[j];
+      auto stackEntryObj = Napi::Object::New(env);
+      stackEntryObj.Set("fullPath", Napi::String::New(env, stackEntry.fullpath));
+      stackEntryObj.Set("prettyPath", Napi::String::New(env, stackEntry.prettypath));
+      stackEntryObj.Set("lineNumber", Napi::Number::New(env, stackEntry.lineno));
+      stackEntryObj.Set("details", Napi::String::New(env, stackEntry.details));
+      stackEntries.Set(j, stackEntryObj);
+    }
+
+    auto errorObj = Napi::Object::New(env);
+    errorObj.Set("fullError", Napi::String::New(env, error.fullerrdata));
+    errorObj.Set("rawError", Napi::String::New(env, error.rawerrdata));
+    errorObj.Set("block", Napi::String::New(env, error.block));
+    errorObj.Set("filename", Napi::String::New(env, error.filename));
+    errorObj.Set("line", Napi::Number::New(env, error.line));
+    errorObj.Set("stackEntries", stackEntries);
+    errorObj.Set("errorName", Napi::String::New(env, error.errname));
+    errorList.Set(i, errorObj);
+  }
+  return errorList;
 }
 
 // Initialize native add-on
