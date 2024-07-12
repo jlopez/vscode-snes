@@ -15,6 +15,11 @@ class Asar : public Napi::ObjectWrap<Asar> {
     static Napi::Value Patch(const Napi::CallbackInfo& info);
     static Napi::Value MaxRomSize(const Napi::CallbackInfo& info);
     static Napi::Value Errors(const Napi::CallbackInfo& info);
+    static Napi::Value Warnings(const Napi::CallbackInfo& info);
+    static Napi::Value Output(const Napi::CallbackInfo& info);
+    static Napi::Value Labels(const Napi::CallbackInfo& info);
+    static Napi::Value Defines(const Napi::CallbackInfo& info);
+    static Napi::Array marshall(const Napi::Env env, const struct errordata *errors, int errorCount);
 };
 
 Napi::Object Asar::Init(Napi::Env env, Napi::Object exports) {
@@ -26,6 +31,10 @@ Napi::Object Asar::Init(Napi::Env env, Napi::Object exports) {
         StaticMethod<&Asar::Patch>("patch", static_cast<napi_property_attributes>(napi_enumerable)),
         StaticAccessor<&Asar::MaxRomSize>("maxRomSize", static_cast<napi_property_attributes>(napi_enumerable)),
         StaticAccessor<&Asar::Errors>("errors", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticAccessor<&Asar::Warnings>("warnings", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticAccessor<&Asar::Output>("output", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticAccessor<&Asar::Labels>("labels", static_cast<napi_property_attributes>(napi_enumerable)),
+        StaticAccessor<&Asar::Defines>("defines", static_cast<napi_property_attributes>(napi_enumerable)),
     });
 
     Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -164,9 +173,62 @@ Napi::Value Asar::Errors(const Napi::CallbackInfo& info) {
   auto env = info.Env();
   auto errorCount = 0;
   auto errors = asar_geterrors(&errorCount);
-  auto errorList = Napi::Array::New(env, errorCount);
-  for (auto i = 0; i < errorCount; i++) {
-    auto error = errors[i];
+  return marshall(env, errors, errorCount);
+}
+
+Napi::Value Asar::Warnings(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  auto warningCount = 0;
+  auto warnings = asar_getwarnings(&warningCount);
+  return marshall(env, warnings, warningCount);
+}
+
+Napi::Value Asar::Output(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  auto outputCount = 0;
+  auto output = asar_getprints(&outputCount);
+  auto outputArray = Napi::Array::New(env, outputCount);
+  for (auto i = 0; i < outputCount; ++i) {
+    auto line = Napi::String::New(env, output[i]);
+    outputArray.Set(i, line);
+  }
+  return outputArray;
+}
+
+Napi::Value Asar::Labels(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  auto count = 0;
+  auto data = asar_getalllabels(&count);
+  auto rv = Napi::Array::New(env, count);
+  for (auto i = 0; i < count; ++i) {
+    auto datum = data[i];
+    auto label = Napi::Object::New(env);
+    label.Set("name", Napi::String::New(env, datum.name));
+    label.Set("location", Napi::Number::New(env, datum.location));
+    rv.Set(i, label);
+  }
+  return rv;
+}
+
+Napi::Value Asar::Defines(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  auto count = 0;
+  auto data = asar_getalldefines(&count);
+  auto rv = Napi::Array::New(env, count);
+  for (auto i = 0; i < count; ++i) {
+    auto datum = data[i];
+    auto define = Napi::Object::New(env);
+    define.Set("name", Napi::String::New(env, datum.name));
+    define.Set("value", Napi::String::New(env, datum.contents));
+    rv.Set(i, define);
+  }
+  return rv;
+}
+
+Napi::Array Asar::marshall(const Napi::Env env, const struct errordata *problems, int count) {
+  auto problemArray = Napi::Array::New(env, count);
+  for (auto i = 0; i < count; i++) {
+    auto error = problems[i];
 
     auto stackEntries = Napi::Array::New(env, error.callstacksize);
     for (auto j = 0; j < error.callstacksize; j++) {
@@ -187,9 +249,9 @@ Napi::Value Asar::Errors(const Napi::CallbackInfo& info) {
     errorObj.Set("line", Napi::Number::New(env, error.line));
     errorObj.Set("stackEntries", stackEntries);
     errorObj.Set("errorName", Napi::String::New(env, error.errname));
-    errorList.Set(i, errorObj);
+    problemArray.Set(i, errorObj);
   }
-  return errorList;
+  return problemArray;
 }
 
 // Initialize native add-on

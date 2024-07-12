@@ -19,7 +19,7 @@ declare module 'bindings' {
         details: string;
     }
 
-    export interface Error {
+    export interface Problem {
         fullError: string;
         rawError: string;
         block: string;
@@ -29,13 +29,27 @@ declare module 'bindings' {
         errorName: string;
     }
 
+    export interface Label {
+        name: string;
+        location: number;
+    }
+
+    export interface Define {
+        name: string;
+        value: string;
+    }
+
     export interface Asar {
         version: number;
         apiVersion: number;
         reset: () => boolean;
         patch: (options: PatchOptions) => boolean;
         maxRomSize: number;
-        errors: Error[];
+        errors: Problem[];
+        warnings: Problem[];
+        output: string[];
+        labels: Label[];
+        defines: Define[];
     }
 
     export const Asar: Asar;
