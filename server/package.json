@@ -12,16 +12,9 @@
 		"url": "https://github.com/jlopez/vscode-snes"
 	},
 	"dependencies": {
-		"ffi-napi": "^4.0.3",
-		"ref-array-di": "^1.2.2",
-		"ref-napi": "^3.0.3",
-		"ref-struct-di": "^1.1.1",
+		"asar": "file:../asar",
 		"vscode-languageserver": "^9.0.1",
 		"vscode-languageserver-textdocument": "^1.0.11"
 	},
-	"scripts": {},
-	"devDependencies": {
-		"@types/ffi-napi": "^4.0.10",
-		"@types/ref-array-di": "^1.2.8"
-	}
+	"scripts": {}
 }

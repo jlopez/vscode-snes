@@ -15,7 +15,8 @@
 			],
 			"outFiles": [
 				"${workspaceRoot}/client/out/**/*.js",
-				"${workspaceRoot}/server/out/**/*.js"
+				"${workspaceRoot}/server/out/**/*.js",
+				"${workspaceRoot}/asar/out/**/*.js",
 			],
 			"preLaunchTask": "${defaultBuildTask}",
 		},

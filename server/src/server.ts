@@ -16,20 +16,19 @@ import {
 	TextDocumentSyncKind,
 	InitializeResult,
 	DocumentDiagnosticReportKind,
-	type DocumentDiagnosticReport
+	type DocumentDiagnosticReport,
+	Position
 } from 'vscode-languageserver/node';
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
-import { Asar } from './Asar';
+import Asar, { Problem } from 'asar';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
 const connection = createConnection(ProposedFeatures.all);
-
-const asar = new Asar();
 
 // Create a simple text document manager.
 const documents: TextDocuments<TextDocument> = new TextDocuments(TextDocument);
@@ -80,19 +79,16 @@ connection.onInitialized(() => {
 			connection.console.log('Workspace folder change event received.');
 		});
 	}
-
-	// Define the path to your .dylib file
-	const dylibPath = '/Users/jlopez/IdeaProjects/personal/asar/asar/lib/libasar.dylib';
-	asar.init(dylibPath);
-	console.log('Asar Version: %d', asar.getVersion());
-	const rv = asar.patch({
+	console.log(Asar.version); // returns number
+	console.log(Asar.apiVersion); // returns number
+	console.log(Asar.reset()); // returns true
+	console.log(Asar.maxRomSize);
+	console.log(Asar.patch({
 		assemblyPath: '/Users/jlopez/IdeaProjects/personal/SMWDisX/smw.asm',
-		romSizeHint: 524_288,
 		defines: {
-			'_VER': '1',
-		}
-	});
-	console.log('patch result: %o', rv);
+			_VER: '1',
+		},
+	}));
 });
 
 // The example settings
@@ -173,44 +169,47 @@ async function validateTextDocument(textDocument: TextDocument): Promise<Diagnos
 	const settings = await getDocumentSettings(textDocument.uri);
 
 	// The validator creates diagnostics for all uppercase words length 2 and more
-	const text = textDocument.getText();
-	const pattern = /\b[A-Z]{2,}\b/g;
-	let m: RegExpExecArray | null;
-
-	let problems = 0;
 	const diagnostics: Diagnostic[] = [];
-	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
-		problems++;
-		const diagnostic: Diagnostic = {
-			severity: DiagnosticSeverity.Warning,
-			range: {
-				start: textDocument.positionAt(m.index),
-				end: textDocument.positionAt(m.index + m[0].length)
-			},
-			message: `${m[0]} is all uppercase.`,
-			source: 'ex'
-		};
-		if (hasDiagnosticRelatedInformationCapability) {
-			diagnostic.relatedInformation = [
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Spelling matters'
-				},
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnostic.range)
-					},
-					message: 'Particularly for names'
-				}
-			];
+	Asar.errors.forEach((error) => processProblem(error, DiagnosticSeverity.Error));
+	Asar.warnings.forEach((warning) => processProblem(warning, DiagnosticSeverity.Warning));
+
+	function processProblem(error: Problem, severity: DiagnosticSeverity) {
+		const errorUri = 'file://' + error.filename;
+		if (errorUri === textDocument.uri) {
+			const diagnostic = diagnosticFromProblem(error, severity);
+			diagnostics.push(diagnostic);
 		}
-		diagnostics.push(diagnostic);
 	}
+
 	return diagnostics;
+}
+
+function diagnosticFromProblem(problem: Problem, severity: DiagnosticSeverity): Diagnostic {
+	const diagnostic: Diagnostic = {
+		range: {
+			start: Position.create(problem.line, 0),
+			end: Position.create(problem.line, problem.block.length)
+		},
+		severity,
+		code: problem.errorName,
+		message: problem.rawError,
+		source: 'Asar'
+	};
+	if (hasDiagnosticRelatedInformationCapability) {
+		diagnostic.relatedInformation = problem.stackEntries.map((stackEntry) => {
+			return {
+				location: {
+					uri: 'file://' + stackEntry.fullPath,
+					range: {
+						start: Position.create(stackEntry.lineNumber, 0),
+						end: Position.create(stackEntry.lineNumber, stackEntry.details.length)
+					}
+				},
+				message: stackEntry.details.trim(),
+			};
+		});
+	}
+	return diagnostic;
 }
 
 connection.onDidChangeWatchedFiles(_change => {

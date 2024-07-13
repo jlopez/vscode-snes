@@ -24,6 +24,6 @@
 	"references": [
 		{ "path": "./client" },
 		{ "path": "./server" },
-		{ "path": "asar" },
+		{ "path": "./asar" },
 	]
 }

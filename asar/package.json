@@ -11,8 +11,10 @@
 		"type": "git",
 		"url": "https://github.com/jlopez/vscode-snes"
 	},
+	"main": "out/index.js",
 	"scripts": {
-		"build": "node-gyp build --debug"
+		"build": "node-gyp build --debug",
+		"postinstall": "node-gyp rebuild"
 	},
 	"devDependencies": {
 		"node-gyp": "^10.2.0"

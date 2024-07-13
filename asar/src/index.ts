@@ -1,42 +1,58 @@
-import bindings, { type Problem } from 'bindings';
+import bindings from 'bindings';
 
-const { Asar } = bindings('asar');
-
-console.log(Asar.version); // returns number
-console.log(Asar.apiVersion); // returns number
-console.log(Asar.reset()); // returns true
-console.log(Asar.maxRomSize);
-console.log(Asar.patch({
-    assemblyPath: '/Users/jlopez/IdeaProjects/personal/SMWDisX/smw.asm',
-    defines: {
-        _VER: '1',
-    },
-}));
-dumpProblems(Asar.errors);
-dumpProblems(Asar.warnings);
-Asar.output.forEach((line, i) => {
-    console.log("%s. %s", i + 1, line);
-});
-// Asar.labels.forEach((label, i) => {
-//     console.log("%s. %s: %s", i + 1, label.name, label.location);
-// });
-Asar.defines.forEach((define, i) => {
-    console.log("%s. %s: %s", i + 1, define.name, define.value);
-});
-
-function dumpProblems(errors: Problem[]) {
-    errors.forEach((error) => {
-        console.log(error.fullError);
-        console.log(error.rawError);
-        console.log(error.block);
-        console.log(error.filename);
-        console.log(error.line);
-        error.stackEntries.forEach((stackEntry) => {
-            console.log(stackEntry.fullPath);
-            console.log(stackEntry.prettyPath);
-            console.log(stackEntry.lineNumber);
-            console.log(stackEntry.details);
-        });
-        console.log(error.errorName);
-    });
+export interface PatchOptions {
+    assemblyPath: string;
+    romSizeHint?: number;
+    includePaths?: string[];
+    defines?: Record<string, string>;
+    stdIncludesPath?: string;
+    stdDefinesPath?: string;
+    generateChecksum?: boolean;
+    fullCallStack?: boolean;
 }
+
+export interface StackEntry {
+    fullPath: string;
+    prettyPath: string;
+    lineNumber: number;
+    details: string;
+}
+
+export interface Problem {
+    fullError: string;
+    rawError: string;
+    block: string;
+    filename: string;
+    line: number;
+    stackEntries: StackEntry[];
+    errorName: string;
+}
+
+export interface Label {
+    name: string;
+    location: number;
+}
+
+export interface Define {
+    name: string;
+    value: string;
+}
+
+export interface AsarAPI {
+    version: number;
+    apiVersion: number;
+    reset: () => boolean;
+    patch: (options: PatchOptions) => boolean;
+    maxRomSize: number;
+    errors: Problem[];
+    warnings: Problem[];
+    output: string[];
+    labels: Label[];
+    defines: Define[];
+}
+
+const bindingObject = bindings('asar');
+
+const Asar: AsarAPI = bindingObject.Asar;
+
+export default Asar;

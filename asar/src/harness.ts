@@ -1,4 +1,4 @@
-import Asar, { type Problem } from "asar";
+import Asar, { type Problem } from "./index";
 
 console.log(Asar.version); // returns number
 console.log(Asar.apiVersion); // returns number
@@ -7,7 +7,7 @@ console.log(Asar.maxRomSize);
 console.log(Asar.patch({
     assemblyPath: '/Users/jlopez/IdeaProjects/personal/SMWDisX/smw.asm',
     defines: {
-        // _VER: '1',
+        _VER: '1',
     },
 }));
 dumpProblems(Asar.errors);
